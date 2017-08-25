@@ -1,9 +1,11 @@
 package cn.zmy.mjwparser;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 
@@ -26,15 +28,14 @@ import cn.zmy.mjwparser.model.VideoGroup;
 
 public class VideosActivity extends Activity
 {
-    private VideoGroup mVideoGroup;
     private GetVideoAsyncTask mGetVideoAsyncTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        this.mVideoGroup = getIntent().getParcelableExtra(IntentKeys.KEY_VIDEO_GROUP);
-        if (this.mVideoGroup == null)
+        VideoGroup mVideoGroup = getIntent().getParcelableExtra(IntentKeys.KEY_VIDEO_GROUP);
+        if (mVideoGroup == null)
         {
             return;
         }
@@ -44,6 +45,16 @@ public class VideosActivity extends Activity
         ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
         VideosAdapter adapter = new VideosAdapter();
         listViewVideos.setAdapter(adapter);
+        listViewVideos.setOnItemClickListener(new AdapterView.OnItemClickListener()
+        {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id)
+            {
+                Intent intent = new Intent(VideosActivity.this, VideoPlayActivity.class);
+                intent.putExtra(IntentKeys.KEY_VIDEO, (Video)parent.getAdapter().getItem(position));
+                VideosActivity.this.startActivity(intent);
+            }
+        });
 
         //解析网页获取视频数据
         mGetVideoAsyncTask = new GetVideoAsyncTask(progressBar, adapter);

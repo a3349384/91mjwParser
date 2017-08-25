@@ -7,4 +7,5 @@ package cn.zmy.mjwparser.constant;
 public class IntentKeys
 {
     public static final String KEY_VIDEO_GROUP = "KEY_VIDEO_GROUP";
+    public static final String KEY_VIDEO = "KEY_VIDEO";
 }
