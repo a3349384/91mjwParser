@@ -6,22 +6,25 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.ArrayMap;
 import android.view.View;
 import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 import android.widget.VideoView;
 
+import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.DataOutputStream;
+import java.net.URL;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import cn.zmy.mjwparser.constant.IntentKeys;
 import cn.zmy.mjwparser.model.Video;
+import cn.zmy.mjwparser.util.IOUtil;
 
 /**
  * Created by zmy on 2017/8/25 0025.
@@ -30,6 +33,7 @@ import cn.zmy.mjwparser.model.Video;
 public class VideoPlayActivity extends Activity
 {
     private GetVideoAddressTask mGetVideoAddressTask;
+    private VideoView mVideoView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -42,12 +46,11 @@ public class VideoPlayActivity extends Activity
         {
             return;
         }
-        final VideoView videoView = (VideoView) findViewById(R.id.videoView);
+        mVideoView = (VideoView) findViewById(R.id.videoView);
         final ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
         final MediaController mediaController = new MediaController(this);
-        videoView.setMediaController(mediaController);
-        videoView.setVideoURI(Uri.parse(video.getUrl()));
-        videoView.setOnInfoListener(new MediaPlayer.OnInfoListener()
+        mVideoView.setMediaController(mediaController);
+        mVideoView.setOnInfoListener(new MediaPlayer.OnInfoListener()
         {
             @Override
             public boolean onInfo(MediaPlayer mp, int what, int extra)
@@ -63,7 +66,7 @@ public class VideoPlayActivity extends Activity
                 return false;
             }
         });
-        videoView.setOnErrorListener(new MediaPlayer.OnErrorListener()
+        mVideoView.setOnErrorListener(new MediaPlayer.OnErrorListener()
         {
             @Override
             public boolean onError(MediaPlayer mp, int what, int extra)
@@ -75,8 +78,18 @@ public class VideoPlayActivity extends Activity
         });
 
         //从网页解析视频地址
-        mGetVideoAddressTask = new GetVideoAddressTask(videoView, progressBar);
+        mGetVideoAddressTask = new GetVideoAddressTask(mVideoView, progressBar);
         mGetVideoAddressTask.execute(video.getUrl());
+    }
+
+    @Override
+    protected void onStop()
+    {
+        super.onStop();
+        if (mVideoView != null && mVideoView.isPlaying())
+        {
+            mVideoView.pause();
+        }
     }
 
     @Override
@@ -112,10 +125,52 @@ public class VideoPlayActivity extends Activity
         {
             try
             {
-                String url = params[0];
-                Document document = Jsoup.connect(url).timeout(10000).get();
-                Element elementVideo = document.select("#my-video_html5_api > source").get(0);
-                return elementVideo.attr("src");
+                String videoWebUrl = params[0];
+                Document document = Jsoup.connect(videoWebUrl).timeout(10000).get();
+                String typeAndTvIdString = document.select(".video_list").get(0).parent().select("p script").get(0).data().trim();
+                String[] variablesString = typeAndTvIdString.split(";");
+                ArrayMap<String,String> variablesMap = new ArrayMap<>();
+                for (String variableString : variablesString)
+                {
+                    String[] keyValue = variableString.replace("var", "").trim().replace("\"", "").split("=");
+                    variablesMap.put(keyValue[0].trim(), keyValue[1].trim());
+                }
+                if (!variablesMap.containsKey("type") || !variablesMap.containsKey("tvid"))
+                {
+                    return null;
+                }
+                String type = variablesMap.get("type");
+                String tvid = variablesMap.get("tvid");
+                //发起Http请求获取视频播放地址
+                String postString = String.format("type=%s&data=%s&cip=%s&refres=1&my_url=%s", type, tvid, "47.52.25.10",videoWebUrl);
+                String postUrl = "https://vod.lujiahb.com/1SuPlayer/vod/Api.php";
+                URL url = new URL(postUrl);
+                HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+                connection.setReadTimeout(10000);
+                connection.setConnectTimeout(10000);
+                connection.setUseCaches(false);
+                connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+                connection.setRequestProperty("Accept", "application/json, text/javascript, */*; q=0.01");
+                connection.setRequestProperty("X-Requested-With", "XMLHttpRequest");
+                connection.setRequestProperty("Referer", String.format("https://vod.lujiahb.com/1SuPlayer/vod/?type=%s&v=%s", type, tvid));
+                connection.setRequestProperty("Accept-Language", "zh-CN");
+                connection.setRequestProperty("Accept-Encoding", "gzip, deflate");
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko");
+                connection.setRequestProperty("Host", "vod.lujiahb.com");
+                connection.setRequestMethod("POST");
+                connection.setDoOutput(true);
+                connection.connect();
+                DataOutputStream dos = new DataOutputStream(connection.getOutputStream());
+                dos.write(postString.getBytes());
+                dos.flush();
+                dos.close();
+
+                if (connection.getResponseCode() != 200)
+                {
+                    return null;
+                }
+                String responseString = IOUtil.toString(connection.getInputStream());
+                return new JSONObject(responseString).getString("url");
             }
             catch (Exception ignored)
             {
@@ -127,6 +182,10 @@ public class VideoPlayActivity extends Activity
         protected void onPostExecute(String videoUrl)
         {
             super.onPostExecute(videoUrl);
+            if (TextUtils.isEmpty(videoUrl))
+            {
+                return;
+            }
             mVideoView.setVideoURI(Uri.parse(videoUrl));
             mVideoView.start();
         }
