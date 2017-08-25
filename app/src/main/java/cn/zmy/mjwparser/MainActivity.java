@@ -1,6 +1,6 @@
 package cn.zmy.mjwparser;
 
-import android.support.v7.app.AppCompatActivity;
+import android.app.Activity;
 import android.os.Bundle;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
@@ -10,23 +10,19 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
 import cn.zmy.mjwparser.model.VideoGroup;
 import cn.zmy.mjwparser.util.IOUtil;
 
-public class MainActivity extends AppCompatActivity
+public class MainActivity extends Activity
 {
     private List<VideoGroup> mVideoGroups;
 
