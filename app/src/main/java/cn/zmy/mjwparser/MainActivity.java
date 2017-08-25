@@ -1,6 +1,7 @@
 package cn.zmy.mjwparser;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
@@ -9,6 +10,8 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -19,6 +22,9 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.zmy.mjwparser.base.SimpleTextAdapter;
+import cn.zmy.mjwparser.constant.IntentKeys;
+import cn.zmy.mjwparser.model.Video;
 import cn.zmy.mjwparser.model.VideoGroup;
 import cn.zmy.mjwparser.util.IOUtil;
 
@@ -66,42 +72,28 @@ public class MainActivity extends Activity
             return;
         }
 
-        RecyclerView recyclerViewVideoGroups = (RecyclerView) findViewById(R.id.recyclerViewVideoGroups);
-        recyclerViewVideoGroups.setHasFixedSize(true);
-        recyclerViewVideoGroups.setLayoutManager(new LinearLayoutManager(this));
-        DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
-        divider.setDrawable(getDrawable(R.drawable.divider_1dp_gray));
-        recyclerViewVideoGroups.addItemDecoration(divider);
-        recyclerViewVideoGroups.setAdapter(new RecyclerView.Adapter()
+        ListView listViewVideoGroups = (ListView) findViewById(R.id.listViewVideoGroups);
+        VideoGroupsAdapter adapter = new VideoGroupsAdapter();
+        listViewVideoGroups.setAdapter(adapter);
+        listViewVideoGroups.setOnItemClickListener(new AdapterView.OnItemClickListener()
         {
             @Override
-            public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType)
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id)
             {
-                return new VideoGroupViewHolder(LayoutInflater.from(MainActivity.this).inflate(R.layout.item_video_group, parent, false));
-            }
-
-            @Override
-            public void onBindViewHolder(RecyclerView.ViewHolder holder, int position)
-            {
-                ((VideoGroupViewHolder)holder).textViewName.setText(mVideoGroups.get(position).getName());
-            }
-
-            @Override
-            public int getItemCount()
-            {
-                return mVideoGroups.size();
-            }
-
-            class VideoGroupViewHolder extends RecyclerView.ViewHolder
-            {
-                public TextView textViewName;
-
-                public VideoGroupViewHolder(View itemView)
-                {
-                    super(itemView);
-                    textViewName = (TextView) itemView;
-                }
+                Intent intent = new Intent(MainActivity.this, VideosActivity.class);
+                intent.putExtra(IntentKeys.KEY_VIDEO_GROUP, mVideoGroups.get(position));
+                MainActivity.this.startActivity(intent);
             }
         });
+        adapter.refresh(mVideoGroups);
+    }
+
+    private static class VideoGroupsAdapter extends SimpleTextAdapter<VideoGroup>
+    {
+        @Override
+        protected String getText(VideoGroup videoGroup)
+        {
+            return videoGroup.getName();
+        }
     }
 }
