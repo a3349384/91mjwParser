@@ -16,5 +16,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".VideosActivity"/>
+        <activity android:name=".VideoPlayActivity" android:screenOrientation="landscape"/>
     </application>
 </manifest>
