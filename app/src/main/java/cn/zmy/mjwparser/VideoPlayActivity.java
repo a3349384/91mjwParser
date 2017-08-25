@@ -149,7 +149,7 @@ public class VideoPlayActivity extends Activity
                 String type = variablesMap.get("type");
                 String tvid = variablesMap.get("tvid");
                 //发起Http请求获取视频播放地址
-                String postString = String.format("type=%s&data=%s&cip=%s&refres=1&my_url=%s", type, tvid, "47.52.25.10",videoWebUrl);
+                String postString = String.format("type=%s&data=%s&refres=1&my_url=%s", type, tvid, videoWebUrl);
                 String postUrl = "https://vod.lujiahb.com/1SuPlayer/vod/Api.php";
                 URL url = new URL(postUrl);
                 HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
