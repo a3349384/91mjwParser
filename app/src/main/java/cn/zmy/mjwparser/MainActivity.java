@@ -3,16 +3,10 @@ package cn.zmy.mjwparser;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -24,7 +18,6 @@ import java.util.List;
 
 import cn.zmy.mjwparser.base.SimpleTextAdapter;
 import cn.zmy.mjwparser.constant.IntentKeys;
-import cn.zmy.mjwparser.model.Video;
 import cn.zmy.mjwparser.model.VideoGroup;
 import cn.zmy.mjwparser.util.IOUtil;
 
