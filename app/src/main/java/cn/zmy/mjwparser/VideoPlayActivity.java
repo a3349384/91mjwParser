@@ -8,10 +8,12 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.MediaController;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.Toast;
 import android.widget.VideoView;
 
@@ -83,6 +85,12 @@ public class VideoPlayActivity extends Activity
                 return false;
             }
         });
+
+        try
+        {
+            SeekBar seekBar = (SeekBar) mediaController.findViewById((int) Class.forName("com.android.internal.R$id").getDeclaredField("mediacontroller_progress").get(null));
+        }
+        catch (Exception ignored) {}
 
         //从网页解析视频地址
         mGetVideoAddressTask = new GetVideoAddressTask(mVideoView, progressBar);
