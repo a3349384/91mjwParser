@@ -1,6 +1,7 @@
 package cn.zmy.mjwparser;
 
 import android.app.Activity;
+import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -8,7 +9,6 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.MediaController;
@@ -20,8 +20,10 @@ import android.widget.VideoView;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.select.Evaluator;
 
 import java.io.DataOutputStream;
+import java.lang.reflect.Field;
 import java.net.URL;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -86,12 +88,6 @@ public class VideoPlayActivity extends Activity
             }
         });
 
-        try
-        {
-            SeekBar seekBar = (SeekBar) mediaController.findViewById((int) Class.forName("com.android.internal.R$id").getDeclaredField("mediacontroller_progress").get(null));
-        }
-        catch (Exception ignored) {}
-
         //从网页解析视频地址
         mGetVideoAddressTask = new GetVideoAddressTask(mVideoView, progressBar);
         mGetVideoAddressTask.execute(video.getUrl());
@@ -115,12 +111,16 @@ public class VideoPlayActivity extends Activity
         {
             mGetVideoAddressTask.cancel(true);
         }
+        //todo 记录播放时间
+
+        mVideoView.getCurrentPosition();
     }
 
     private static class GetVideoAddressTask extends AsyncTask<String, Void, String>
     {
         private VideoView mVideoView;
         private ProgressBar mProgressBar;
+
 
         public GetVideoAddressTask(VideoView videoView, ProgressBar progressBar)
         {
@@ -203,6 +203,18 @@ public class VideoPlayActivity extends Activity
             }
             mVideoView.setVideoURI(Uri.parse(videoUrl));
             mVideoView.start();
+
+            try
+            {
+                Field fieldController = VideoView.class.getDeclaredField("mMediaController");
+                fieldController.setAccessible(true);
+                MediaController mediaController = (MediaController) fieldController.get(mVideoView);
+                Field fieldId = Class.forName("com.android.internal.R$id").getDeclaredField("mediacontroller_progress");
+                fieldId.setAccessible(true);
+                SeekBar seekBar = (SeekBar) mediaController.findViewById((Integer) fieldId.get(null));
+                seekBar.getThumb().setTint(Color.WHITE);
+            }
+            catch (Exception ignored) {}
         }
 
         @Override
