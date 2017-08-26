@@ -24,6 +24,7 @@ import org.jsoup.nodes.Document;
 import java.io.DataOutputStream;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.net.URLEncoder;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -164,7 +165,8 @@ public class VideoPlayActivity extends Activity
                 String type = variablesMap.get("type");
                 String tvid = variablesMap.get("tvid");
                 //发起Http请求获取视频播放地址
-                String postString = String.format("type=%s&data=%s&cip=221.237.118.61&refres=1&my_url=%s", type, tvid, videoWebUrl);
+                String postString = String.format("type=%s&data=%s&cip=221.237.118.61&refres=1&my_url=%s",
+                        type, URLEncoder.encode(tvid, "UTF-8"), URLEncoder.encode(videoWebUrl, "UTF-8"));
                 String postUrl = "https://vod.lujiahb.com/1SuPlayer/vod/Api.php";
                 URL url = new URL(postUrl);
                 HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
