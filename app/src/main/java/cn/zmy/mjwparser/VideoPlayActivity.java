@@ -164,13 +164,12 @@ public class VideoPlayActivity extends Activity
                 String type = variablesMap.get("type");
                 String tvid = variablesMap.get("tvid");
                 //发起Http请求获取视频播放地址
-                String postString = String.format("type=%s&data=%s&refres=1&my_url=%s", type, tvid, videoWebUrl);
+                String postString = String.format("type=%s&data=%s&cip=221.237.118.61&refres=1&my_url=%s", type, tvid, videoWebUrl);
                 String postUrl = "https://vod.lujiahb.com/1SuPlayer/vod/Api.php";
                 URL url = new URL(postUrl);
                 HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
                 connection.setReadTimeout(10000);
                 connection.setConnectTimeout(10000);
-                connection.setUseCaches(false);
                 connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
                 connection.setRequestProperty("Accept", "application/json, text/javascript, */*; q=0.01");
                 connection.setRequestProperty("X-Requested-With", "XMLHttpRequest");
