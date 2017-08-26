@@ -2,6 +2,7 @@ package cn.zmy.mjwparser;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -13,8 +14,13 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.net.CookieHandler;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import cn.zmy.mjwparser.base.SimpleTextAdapter;
 import cn.zmy.mjwparser.constant.IntentKeys;
@@ -29,6 +35,50 @@ public class MainActivity extends Activity
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        //hook cookie handler,解决VideoView播放链接不携带cookie的问题
+        try
+        {
+            Field fieldCookieHandler = null;
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.M)
+            {
+                fieldCookieHandler = Class.forName("java.net.CookieHandler").getDeclaredField("systemWideCookieHandler");
+            }
+            else
+            {
+                fieldCookieHandler = Class.forName("java.net.CookieHandler").getDeclaredField("cookieHandler");
+            }
+            fieldCookieHandler.setAccessible(true);
+            fieldCookieHandler.set(null, new CookieHandler()
+            {
+                private List<String> mCookies;
+
+                @Override
+                public Map<String, List<String>> get(URI uri, Map<String, List<String>> requestHeaders) throws IOException
+                {
+                    Map<String, List<String>> cookieMap =
+                            new java.util.HashMap<String, List<String>>();
+                    if (uri.getHost().endsWith("1suplayer.me") && mCookies != null && mCookies.size() > 0)
+                    {
+                        cookieMap.put("Cookie", mCookies);
+                    }
+                    return Collections.unmodifiableMap(cookieMap);
+                }
+
+                @Override
+                public void put(URI uri, Map<String, List<String>> responseHeaders) throws IOException
+                {
+                    if (uri.getHost().contentEquals("file.1suplayer.me") && responseHeaders.containsKey("Set-Cookie"))
+                    {
+                        mCookies = responseHeaders.get("Set-Cookie");
+                    }
+                }
+            });
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
         setContentView(R.layout.activity_main);
 
         InputStream inputStreamVideoGroups = null;
