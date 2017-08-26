@@ -20,7 +20,6 @@ import android.widget.VideoView;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.select.Evaluator;
 
 import java.io.DataOutputStream;
 import java.lang.reflect.Field;
@@ -199,6 +198,7 @@ public class VideoPlayActivity extends Activity
             super.onPostExecute(videoUrl);
             if (TextUtils.isEmpty(videoUrl))
             {
+                Toast.makeText(mVideoView.getContext(), "视频地址获取失败", Toast.LENGTH_SHORT).show();
                 return;
             }
             mVideoView.setVideoURI(Uri.parse(videoUrl));
