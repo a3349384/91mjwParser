@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -34,6 +35,9 @@ public class VideosActivity extends Activity
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        getActionBar().setHomeButtonEnabled(true);
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+
         VideoGroup mVideoGroup = getIntent().getParcelableExtra(IntentKeys.KEY_VIDEO_GROUP);
         if (mVideoGroup == null)
         {
@@ -51,7 +55,7 @@ public class VideosActivity extends Activity
             public void onItemClick(AdapterView<?> parent, View view, int position, long id)
             {
                 Intent intent = new Intent(VideosActivity.this, VideoPlayActivity.class);
-                intent.putExtra(IntentKeys.KEY_VIDEO, (Video)parent.getAdapter().getItem(position));
+                intent.putExtra(IntentKeys.KEY_VIDEO, (Video) parent.getAdapter().getItem(position));
                 VideosActivity.this.startActivity(intent);
             }
         });
@@ -69,6 +73,17 @@ public class VideosActivity extends Activity
         {
             mGetVideoAsyncTask.cancel(true);
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem menuItem)
+    {
+        if (menuItem.getItemId() == android.R.id.home)
+        {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(menuItem);
     }
 
     private static class GetVideoAsyncTask extends AsyncTask<String, Void, List<Video>>
