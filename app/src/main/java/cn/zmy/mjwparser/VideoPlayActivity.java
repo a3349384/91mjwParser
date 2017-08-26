@@ -76,6 +76,14 @@ public class VideoPlayActivity extends Activity
                 return false;
             }
         });
+        mVideoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener()
+        {
+            @Override
+            public void onPrepared(MediaPlayer mp)
+            {
+                progressBar.setVisibility(View.GONE);
+            }
+        });
         mVideoView.setOnErrorListener(new MediaPlayer.OnErrorListener()
         {
             @Override
