@@ -3,7 +3,6 @@ package cn.zmy.mjwparser;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
-import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -15,7 +14,6 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.MediaController;
 import android.widget.ProgressBar;
-import android.widget.SeekBar;
 import android.widget.Toast;
 import android.widget.VideoView;
 
@@ -24,7 +22,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import java.io.DataOutputStream;
-import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLEncoder;
 
