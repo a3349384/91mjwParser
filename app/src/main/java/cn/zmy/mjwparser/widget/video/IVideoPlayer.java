@@ -34,27 +34,27 @@ public interface IVideoPlayer
 
     void setVideoEventsListener(OnVideoEventsListener videoEventsListener);
 
-    public interface OnErrorListener {
+    interface OnErrorListener {
         boolean onError(IVideoPlayer player, int var2, int var3);
     }
 
-    public interface OnVideoSizeChangedListener {
+    interface OnVideoSizeChangedListener {
         void onVideoSizeChanged(IVideoPlayer player, int var2, int var3, int var4, int var5);
     }
 
-    public interface OnSeekCompleteListener {
+    interface OnSeekCompleteListener {
         void onSeekComplete(IVideoPlayer player);
     }
 
-    public interface OnBufferingUpdateListener {
+    interface OnBufferingUpdateListener {
         void onBufferingUpdate(IVideoPlayer player, int var2);
     }
 
-    public interface OnCompletionListener {
+    interface OnCompletionListener {
         void onCompletion(IVideoPlayer player);
     }
 
-    public interface OnPreparedListener {
+    interface OnPreparedListener {
         void onPrepared(IVideoPlayer player);
     }
 }
