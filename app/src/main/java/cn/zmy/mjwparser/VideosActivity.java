@@ -1,27 +1,42 @@
 package cn.zmy.mjwparser;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ProviderInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.ArrayMap;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.Toast;
+import android.widget.VideoView;
 
+import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.DataOutputStream;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import cn.zmy.mjwparser.base.SimpleTextAdapter;
 import cn.zmy.mjwparser.constant.IntentKeys;
 import cn.zmy.mjwparser.model.Video;
 import cn.zmy.mjwparser.model.VideoGroup;
+import cn.zmy.mjwparser.util.IOUtil;
 
 /**
  * Created by zmy on 2017/8/25 0025.
@@ -30,6 +45,7 @@ import cn.zmy.mjwparser.model.VideoGroup;
 public class VideosActivity extends Activity
 {
     private GetVideoAsyncTask mGetVideoAsyncTask;
+    private GetVideoAddressTask mGetVideoAddressTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -54,9 +70,7 @@ public class VideosActivity extends Activity
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id)
             {
-                Intent intent = new Intent(VideosActivity.this, VideoPlayActivity.class);
-                intent.putExtra(IntentKeys.KEY_VIDEO, (Video) parent.getAdapter().getItem(position));
-                VideosActivity.this.startActivity(intent);
+                onVideoClick((Video) parent.getAdapter().getItem(position));
             }
         });
 
@@ -73,6 +87,10 @@ public class VideosActivity extends Activity
         {
             mGetVideoAsyncTask.cancel(true);
         }
+        if (mGetVideoAddressTask != null && mGetVideoAddressTask.getStatus() != AsyncTask.Status.FINISHED)
+        {
+            mGetVideoAddressTask.cancel(true);
+        }
     }
 
     @Override
@@ -84,6 +102,29 @@ public class VideosActivity extends Activity
             return true;
         }
         return super.onOptionsItemSelected(menuItem);
+    }
+
+    private void onVideoClick(Video video)
+    {
+        ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setCancelable(true);
+        progressDialog.setMessage("正在解析视频播放地址...");
+        progressDialog.setTitle("请稍候");
+        progressDialog.setIndeterminate(true);
+        progressDialog.setOnCancelListener(new DialogInterface.OnCancelListener()
+        {
+            @Override
+            public void onCancel(DialogInterface dialog)
+            {
+                if (mGetVideoAddressTask != null)
+                {
+                    mGetVideoAddressTask.cancel(true);
+                }
+            }
+        });
+
+        mGetVideoAddressTask = new GetVideoAddressTask(progressDialog);
+        mGetVideoAddressTask.execute(video);
     }
 
     private static class GetVideoAsyncTask extends AsyncTask<String, Void, List<Video>>
@@ -144,6 +185,108 @@ public class VideosActivity extends Activity
             super.onCancelled();
             mProgressBar = null;
             mAdapter = null;
+        }
+    }
+
+    private static class GetVideoAddressTask extends AsyncTask<Video, Void, String>
+    {
+        private ProgressDialog mProgressDialog;
+        private Video mVideo;
+
+        public GetVideoAddressTask(ProgressDialog progressDialog)
+        {
+            this.mProgressDialog = progressDialog;
+        }
+
+        @Override
+        protected void onPreExecute()
+        {
+            super.onPreExecute();
+            mProgressDialog.show();
+        }
+
+        @Override
+        protected String doInBackground(Video... params)
+        {
+            try
+            {
+                mVideo = params[0];
+                String videoWebUrl = mVideo.getUrl();
+                Document document = Jsoup.connect(videoWebUrl).timeout(10000).get();
+                String typeAndTvIdString = document.select(".video_list").get(0).parent().select("p script").get(0).data().trim();
+                String[] variablesString = typeAndTvIdString.split(";");
+                ArrayMap<String,String> variablesMap = new ArrayMap<>();
+                for (String variableString : variablesString)
+                {
+                    String[] keyValue = variableString.replace("var", "").trim().replace("\"", "").split("=");
+                    variablesMap.put(keyValue[0].trim(), keyValue[1].trim());
+                }
+                if (!variablesMap.containsKey("type") || !variablesMap.containsKey("tvid"))
+                {
+                    return null;
+                }
+                String type = variablesMap.get("type");
+                String tvid = variablesMap.get("tvid");
+                //发起Http请求获取视频播放地址
+                String postString = String.format("type=%s&data=%s&cip=221.237.118.61&refres=1&my_url=%s",
+                        type, URLEncoder.encode(tvid, "UTF-8"), URLEncoder.encode(videoWebUrl, "UTF-8"));
+                String postUrl = "https://vod.lujiahb.com/1SuPlayer/vod/Api.php";
+                URL url = new URL(postUrl);
+                HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+                connection.setReadTimeout(10000);
+                connection.setConnectTimeout(10000);
+                connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+                connection.setRequestProperty("Accept", "application/json, text/javascript, */*; q=0.01");
+                connection.setRequestProperty("X-Requested-With", "XMLHttpRequest");
+                connection.setRequestProperty("Referer", String.format("https://vod.lujiahb.com/1SuPlayer/vod/?type=%s&v=%s", type, tvid));
+                connection.setRequestProperty("Accept-Language", "zh-CN");
+                connection.setRequestProperty("Accept-Encoding", "gzip, deflate");
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko");
+                connection.setRequestProperty("Host", "vod.lujiahb.com");
+                connection.setRequestMethod("POST");
+                connection.setDoOutput(true);
+                connection.connect();
+                DataOutputStream dos = new DataOutputStream(connection.getOutputStream());
+                dos.write(postString.getBytes());
+                dos.flush();
+                dos.close();
+
+                if (connection.getResponseCode() != 200)
+                {
+                    return null;
+                }
+                String responseString = IOUtil.toString(connection.getInputStream());
+                return new JSONObject(responseString).getString("url");
+            }
+            catch (Exception ignored)
+            {
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String videoUrl)
+        {
+            super.onPostExecute(videoUrl);
+            mProgressDialog.dismiss();
+            if (TextUtils.isEmpty(videoUrl))
+            {
+                Toast.makeText(mProgressDialog.getContext(), "视频地址获取失败,请重试", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Intent intentOpenVideo = new Intent(Intent.ACTION_VIEW);
+            intentOpenVideo.setPackage("com.miui.video");
+            intentOpenVideo.setDataAndType(Uri.parse(videoUrl), "video/*");
+            intentOpenVideo.putExtra("mediaTitle", mVideo.getName());
+            mProgressDialog.getContext().startActivity(intentOpenVideo);
+        }
+
+        @Override
+        protected void onCancelled()
+        {
+            super.onCancelled();
+            mProgressDialog = null;
         }
     }
 
