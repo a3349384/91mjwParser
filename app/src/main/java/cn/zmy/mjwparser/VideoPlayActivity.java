@@ -1,11 +1,8 @@
 package cn.zmy.mjwparser;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
-import android.app.SharedElementCallback;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -23,17 +20,17 @@ import cn.zmy.mjwparser.widget.video.SuperVideoView;
 
 public class VideoPlayActivity extends Activity
 {
-    public static void start(Context context, String videoUrl, String videoTitle, long seekDuration)
+    public static void start(Context context, String videoId, String videoUrl)
     {
         Intent intent = new Intent(context, VideoPlayActivity.class);
         intent.putExtra(IntentKeys.KEY_VIDEO_URL, videoUrl);
-        intent.putExtra(IntentKeys.KEY_VIDEO_TITLE, videoTitle);
-        intent.putExtra(IntentKeys.KEY_SEEK_DURATION, seekDuration);
+        intent.putExtra(IntentKeys.KEY_VIDEO_ID, videoId);
         context.startActivity(intent);
     }
 
     private SuperVideoController mVideoController;
     private String mVideoUrl;
+    private String mVideoId;
     private boolean mIsVideoPauseByManual;
 
     @Override
@@ -44,8 +41,8 @@ public class VideoPlayActivity extends Activity
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         mVideoUrl = getIntent().getStringExtra(IntentKeys.KEY_VIDEO_URL);
-        String videoTitle = getIntent().getStringExtra(IntentKeys.KEY_VIDEO_TITLE);
-        long seekDuration = getPlayedDuration(mVideoUrl);
+        mVideoId = getIntent().getStringExtra(IntentKeys.KEY_VIDEO_ID);
+        long seekDuration = getPlayedDuration(mVideoId);
         if (TextUtils.isEmpty(mVideoUrl))
         {
             return;
@@ -68,12 +65,12 @@ public class VideoPlayActivity extends Activity
         {
             return;
         }
-        if (!TextUtils.isEmpty(mVideoUrl))
+        if (!TextUtils.isEmpty(mVideoId))
         {
             long playDuration = mVideoController.getPlayer().getCurrentPosition();
             if (playDuration > 0)
             {
-                setPlayedDuration(mVideoUrl, playDuration);
+                setPlayedDuration(mVideoId, playDuration);
             }
             mVideoController.stop();
             mVideoController.release();
@@ -101,16 +98,16 @@ public class VideoPlayActivity extends Activity
         }
     }
 
-    private long getPlayedDuration(String videoUrl)
+    private long getPlayedDuration(String videoId)
     {
-        return getSharedPreferences("VIDEO_PLAYED_DURATION", Context.MODE_PRIVATE).getLong(Md5Util.md5(videoUrl), 0);
+        return getSharedPreferences("VIDEO_PLAYED_DURATION", Context.MODE_PRIVATE).getLong(Md5Util.md5(videoId), 0);
     }
 
-    private void setPlayedDuration(String videoUrl, long duration)
+    private void setPlayedDuration(String videoId, long duration)
     {
         getSharedPreferences("VIDEO_PLAYED_DURATION", Context.MODE_PRIVATE)
                 .edit()
-                .putLong(Md5Util.md5(videoUrl), duration)
+                .putLong(Md5Util.md5(videoId), duration)
                 .apply();
     }
 }

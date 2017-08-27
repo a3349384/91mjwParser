@@ -65,13 +65,10 @@ public class VideosActivity extends Activity
         ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
         VideosAdapter adapter = new VideosAdapter();
         listViewVideos.setAdapter(adapter);
-        listViewVideos.setOnItemClickListener(new AdapterView.OnItemClickListener()
-        {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id)
-            {
-                onVideoClick((Video) parent.getAdapter().getItem(position));
-            }
+        listViewVideos.setOnItemClickListener((parent, view, position, id) -> {
+            Video video = (Video) parent.getAdapter().getItem(position);
+            video.setId(mVideoGroup.getName() + position);
+            onVideoClick(video);
         });
 
         //解析网页获取视频数据
@@ -282,7 +279,7 @@ public class VideosActivity extends Activity
                 return;
             }
 
-            VideoPlayActivity.start(mProgressDialog.getContext(), videoUrl, mVideo.getName(), 0);
+            VideoPlayActivity.start(mProgressDialog.getContext(), mVideo.getId(), videoUrl);
         }
 
         @Override
