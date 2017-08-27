@@ -6,4 +6,5 @@
 
     <color name="colorLightGray">#FFEEEEEE</color>
     <color name="colorText">#FF333333</color>
+    <color name="colorTranslucent">#CC000000</color>
 </resources>

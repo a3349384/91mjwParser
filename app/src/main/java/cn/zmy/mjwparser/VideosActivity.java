@@ -107,25 +107,9 @@ public class VideosActivity extends Activity
 
     private void onVideoClick(Video video)
     {
-        ProgressDialog progressDialog = new ProgressDialog(this);
-        progressDialog.setCancelable(true);
-        progressDialog.setMessage("正在解析视频播放地址...");
-        progressDialog.setTitle("请稍候");
-        progressDialog.setIndeterminate(true);
-        progressDialog.setOnCancelListener(new DialogInterface.OnCancelListener()
-        {
-            @Override
-            public void onCancel(DialogInterface dialog)
-            {
-                if (mGetVideoAddressTask != null)
-                {
-                    mGetVideoAddressTask.cancel(true);
-                }
-            }
-        });
-
-        mGetVideoAddressTask = new GetVideoAddressTask(progressDialog);
-        mGetVideoAddressTask.execute(video);
+        Intent intent = new Intent(this, VideoPlayActivity.class);
+        intent.putExtra(IntentKeys.KEY_VIDEO, video);
+        startActivity(intent);
     }
 
     private static class GetVideoAsyncTask extends AsyncTask<String, Void, List<Video>>
