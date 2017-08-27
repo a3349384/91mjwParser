@@ -42,7 +42,7 @@ public class IJKVideoPlayer implements IVideoPlayer
         this.player.resetListeners();
         this.player.reset();
         this.player.setScreenOnWhilePlaying(true);
-        this.player.setKeepInBackground(true);
+        this.player.setKeepInBackground(false);
 
         this.player.setOnPreparedListener(player ->
         {

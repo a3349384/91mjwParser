@@ -28,6 +28,8 @@ public class VideoPlayActivity extends Activity
         context.startActivity(intent);
     }
 
+    private SuperVideoController mVideoController;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -44,8 +46,16 @@ public class VideoPlayActivity extends Activity
         }
         setContentView(R.layout.activity_video_play);
         SuperVideoView videoView = (SuperVideoView) findViewById(R.id.videoView);
-        SuperVideoController videoController = new SuperVideoController(this);
-        videoView.setVideoController(videoController);
-        videoController.play(Uri.parse(videoUrl), null);
+        mVideoController = new SuperVideoController(this);
+        videoView.setVideoController(mVideoController);
+        mVideoController.play(Uri.parse(videoUrl), null);
+    }
+
+    @Override
+    protected void onDestroy()
+    {
+        super.onDestroy();
+        mVideoController.stop();
+        mVideoController.release();
     }
 }
