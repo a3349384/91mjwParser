@@ -1,6 +1,7 @@
 package cn.zmy.mjwparser;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.app.SharedElementCallback;
 import android.content.Context;
 import android.content.Intent;
@@ -33,6 +34,7 @@ public class VideoPlayActivity extends Activity
 
     private SuperVideoController mVideoController;
     private String mVideoUrl;
+    private boolean mIsVideoPauseByManual;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -75,6 +77,27 @@ public class VideoPlayActivity extends Activity
             }
             mVideoController.stop();
             mVideoController.release();
+        }
+    }
+
+    @Override
+    protected void onStart()
+    {
+        super.onStart();
+        if (mIsVideoPauseByManual)
+        {
+            mVideoController.getPlayer().play();
+        }
+    }
+
+    @Override
+    protected void onStop()
+    {
+        super.onStop();
+        if (mVideoController.getPlayer().isPlaying())
+        {
+            mVideoController.getPlayer().pause();
+            mIsVideoPauseByManual = true;
         }
     }
 
