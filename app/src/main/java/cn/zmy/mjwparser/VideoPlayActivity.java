@@ -1,6 +1,8 @@
 package cn.zmy.mjwparser;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -91,6 +93,8 @@ public class VideoPlayActivity extends Activity
             public boolean onError(MediaPlayer mp, int what, int extra)
             {
                 progressBar.setVisibility(View.GONE);
+                new AlertDialog.Builder(VideoPlayActivity.this)
+                        .setMessage("what=" + what + "extra=" + extra);
                 Toast.makeText(VideoPlayActivity.this, "播放失败", Toast.LENGTH_SHORT).show();
                 return false;
             }
@@ -210,20 +214,11 @@ public class VideoPlayActivity extends Activity
                 Toast.makeText(mVideoView.getContext(), "视频地址获取失败", Toast.LENGTH_SHORT).show();
                 return;
             }
-            mVideoView.setVideoURI(Uri.parse(videoUrl));
-            mVideoView.start();
 
-            try
-            {
-                Field fieldController = VideoView.class.getDeclaredField("mMediaController");
-                fieldController.setAccessible(true);
-                MediaController mediaController = (MediaController) fieldController.get(mVideoView);
-                Field fieldId = Class.forName("com.android.internal.R$id").getDeclaredField("mediacontroller_progress");
-                fieldId.setAccessible(true);
-                SeekBar seekBar = (SeekBar) mediaController.findViewById((Integer) fieldId.get(null));
-                seekBar.getThumb().setTint(Color.WHITE);
-            }
-            catch (Exception ignored) {}
+            Intent intentOpenVideo = new Intent(Intent.ACTION_VIEW);
+            intentOpenVideo.setPackage("com.miui.video");
+            intentOpenVideo.setDataAndType(Uri.parse(videoUrl), "video/*");
+            mVideoView.getContext().startActivity(intentOpenVideo);
         }
 
         @Override
