@@ -32,6 +32,8 @@ public interface IVideoPlayer
 
     long getDuration();
 
+    long getCurrentPosition();
+
     void setVideoEventsListener(OnVideoEventsListener videoEventsListener);
 
     interface OnErrorListener {

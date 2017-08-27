@@ -36,6 +36,7 @@ public class SuperVideoController extends FrameLayout
 {
     protected IVideoPlayer player;
     protected long videoDuration;
+    protected long preSeekDuration;
     protected SubscriptionList subscriptionList;
 
     protected View viewControl;
@@ -196,7 +197,15 @@ public class SuperVideoController extends FrameLayout
     {
         this.videoDuration = this.player.getDuration();
         this.textViewDuration.setText(toTimeString(videoDuration));
-        this.player.play();
+        if (this.preSeekDuration == 0 || this.preSeekDuration >= this.videoDuration)
+        {
+            this.player.play();
+        }
+        else
+        {
+            this.player.seekTo(this.preSeekDuration);
+            this.player.play();
+        }
     }
 
     @Override
@@ -295,6 +304,12 @@ public class SuperVideoController extends FrameLayout
         this.player.setUri(uri,header);
         this.player.setVideoEventsListener(this);
         this.player.prepare();
+    }
+
+    public void play(Uri uri, Map<String,String> header, long preSeekDuration)
+    {
+        this.preSeekDuration = preSeekDuration;
+        this.play(uri, header);
     }
 
     public void pause()

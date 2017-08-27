@@ -179,6 +179,12 @@ public class IJKVideoPlayer implements IVideoPlayer
     }
 
     @Override
+    public long getCurrentPosition()
+    {
+        return this.player.getCurrentPosition();
+    }
+
+    @Override
     public void setVideoEventsListener(OnVideoEventsListener videoEventsListener)
     {
         this.videoEventsListener = videoEventsListener;
