@@ -48,6 +48,9 @@ public class VideoPlayActivity extends Activity
         {
             return;
         }
+        //保持屏幕常亮
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         setContentView(R.layout.activity_video_play);
         SuperVideoView videoView = (SuperVideoView) findViewById(R.id.videoView);
         mVideoController = new SuperVideoController(this);
