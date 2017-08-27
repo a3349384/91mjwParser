@@ -1,6 +1,8 @@
 package cn.zmy.mjwparser;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -17,7 +19,14 @@ import cn.zmy.mjwparser.widget.video.SuperVideoView;
 
 public class VideoPlayActivity extends Activity
 {
-    private String mVideoUrl;
+    public static void start(Context context, String videoUrl, String videoTitle, long seekDuration)
+    {
+        Intent intent = new Intent(context, VideoPlayActivity.class);
+        intent.putExtra(IntentKeys.KEY_VIDEO_URL, videoUrl);
+        intent.putExtra(IntentKeys.KEY_VIDEO_TITLE, videoTitle);
+        intent.putExtra(IntentKeys.KEY_SEEK_DURATION, seekDuration);
+        context.startActivity(intent);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -26,8 +35,10 @@ public class VideoPlayActivity extends Activity
         getWindow().requestFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        mVideoUrl = getIntent().getStringExtra(IntentKeys.KEY_VIDEO_URL);
-        if (TextUtils.isEmpty(mVideoUrl))
+        String videoUrl = getIntent().getStringExtra(IntentKeys.KEY_VIDEO_URL);
+        String videoTitle = getIntent().getStringExtra(IntentKeys.KEY_VIDEO_TITLE);
+        long seekDuration = getIntent().getLongExtra(IntentKeys.KEY_SEEK_DURATION, 0);
+        if (TextUtils.isEmpty(videoUrl))
         {
             return;
         }
@@ -35,6 +46,6 @@ public class VideoPlayActivity extends Activity
         SuperVideoView videoView = (SuperVideoView) findViewById(R.id.videoView);
         SuperVideoController videoController = new SuperVideoController(this);
         videoView.setVideoController(videoController);
-        videoController.play(Uri.parse(mVideoUrl), null);
+        videoController.play(Uri.parse(videoUrl), null);
     }
 }

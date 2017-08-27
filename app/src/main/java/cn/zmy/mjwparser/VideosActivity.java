@@ -283,9 +283,7 @@ public class VideosActivity extends Activity
                 return;
             }
 
-            Intent intent = new Intent(mProgressDialog.getContext(), VideoPlayActivity.class);
-            intent.putExtra(IntentKeys.KEY_VIDEO_URL, videoUrl);
-            mProgressDialog.getContext().startActivity(intent);
+            VideoPlayActivity.start(mProgressDialog.getContext(), videoUrl, mVideo.getName(), 0);
         }
 
         @Override
