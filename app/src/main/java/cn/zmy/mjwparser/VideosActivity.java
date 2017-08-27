@@ -107,9 +107,21 @@ public class VideosActivity extends Activity
 
     private void onVideoClick(Video video)
     {
-        Intent intent = new Intent(this, VideoPlayActivity.class);
-        intent.putExtra(IntentKeys.KEY_VIDEO, video);
-        startActivity(intent);
+        ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setCancelable(true);
+        progressDialog.setMessage("正在解析视频播放地址...");
+        progressDialog.setTitle("请稍候");
+        progressDialog.setIndeterminate(true);
+        progressDialog.setOnCancelListener(dialog ->
+        {
+            if (mGetVideoAddressTask != null)
+            {
+                mGetVideoAddressTask.cancel(true);
+            }
+        });
+
+        mGetVideoAddressTask = new GetVideoAddressTask(progressDialog);
+        mGetVideoAddressTask.execute(video);
     }
 
     private static class GetVideoAsyncTask extends AsyncTask<String, Void, List<Video>>
@@ -271,11 +283,9 @@ public class VideosActivity extends Activity
                 return;
             }
 
-            Intent intentOpenVideo = new Intent(Intent.ACTION_VIEW);
-            intentOpenVideo.setPackage("com.miui.video");
-            intentOpenVideo.setDataAndType(Uri.parse(videoUrl), "video/*");
-            intentOpenVideo.putExtra("mediaTitle", mVideo.getName());
-            mProgressDialog.getContext().startActivity(intentOpenVideo);
+            Intent intent = new Intent(mProgressDialog.getContext(), VideoPlayActivity.class);
+            intent.putExtra(IntentKeys.KEY_VIDEO_URL, videoUrl);
+            mProgressDialog.getContext().startActivity(intent);
         }
 
         @Override

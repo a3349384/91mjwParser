@@ -1,12 +1,14 @@
 package cn.zmy.mjwparser;
 
 import android.app.Activity;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Window;
 import android.view.WindowManager;
 
 import cn.zmy.mjwparser.constant.IntentKeys;
+import cn.zmy.mjwparser.widget.video.SuperVideoController;
 import cn.zmy.mjwparser.widget.video.SuperVideoView;
 
 /**
@@ -31,5 +33,8 @@ public class VideoPlayActivity extends Activity
         }
         setContentView(R.layout.activity_video_play);
         SuperVideoView videoView = (SuperVideoView) findViewById(R.id.videoView);
+        SuperVideoController videoController = new SuperVideoController(this);
+        videoView.setVideoController(videoController);
+        videoController.play(Uri.parse(mVideoUrl), null);
     }
 }
