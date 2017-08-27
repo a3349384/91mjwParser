@@ -52,7 +52,6 @@ public class VideosActivity extends Activity
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        getActionBar().setHomeButtonEnabled(true);
         getActionBar().setDisplayHomeAsUpEnabled(true);
 
         VideoGroup mVideoGroup = getIntent().getParcelableExtra(IntentKeys.KEY_VIDEO_GROUP);
