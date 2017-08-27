@@ -29,6 +29,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -208,60 +209,71 @@ public class VideosActivity extends Activity
         @Override
         protected String doInBackground(Video... params)
         {
-            try
+            mVideo = params[0];
+            String videoWebUrl = mVideo.getUrl();
+            String videoPlayAddress = null;
+            int retryTimes = 0;
+            while (retryTimes < 3)
             {
-                mVideo = params[0];
-                String videoWebUrl = mVideo.getUrl();
-                Document document = Jsoup.connect(videoWebUrl).timeout(10000).get();
-                String typeAndTvIdString = document.select(".video_list").get(0).parent().select("p script").get(0).data().trim();
-                String[] variablesString = typeAndTvIdString.split(";");
-                ArrayMap<String,String> variablesMap = new ArrayMap<>();
-                for (String variableString : variablesString)
+                try
                 {
-                    String[] keyValue = variableString.replace("var", "").trim().replace("\"", "").split("=");
-                    variablesMap.put(keyValue[0].trim(), keyValue[1].trim());
-                }
-                if (!variablesMap.containsKey("type") || !variablesMap.containsKey("tvid"))
-                {
-                    return null;
-                }
-                String type = variablesMap.get("type");
-                String tvid = variablesMap.get("tvid");
-                //发起Http请求获取视频播放地址
-                String postString = String.format("type=%s&data=%s&cip=221.237.118.61&refres=1&my_url=%s",
-                        type, URLEncoder.encode(tvid, "UTF-8"), URLEncoder.encode(videoWebUrl, "UTF-8"));
-                String postUrl = "https://vod.lujiahb.com/1SuPlayer/vod/Api.php";
-                URL url = new URL(postUrl);
-                HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-                connection.setReadTimeout(10000);
-                connection.setConnectTimeout(10000);
-                connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
-                connection.setRequestProperty("Accept", "application/json, text/javascript, */*; q=0.01");
-                connection.setRequestProperty("X-Requested-With", "XMLHttpRequest");
-                connection.setRequestProperty("Referer", String.format("https://vod.lujiahb.com/1SuPlayer/vod/?type=%s&v=%s", type, tvid));
-                connection.setRequestProperty("Accept-Language", "zh-CN");
-                connection.setRequestProperty("Accept-Encoding", "gzip, deflate");
-                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko");
-                connection.setRequestProperty("Host", "vod.lujiahb.com");
-                connection.setRequestMethod("POST");
-                connection.setDoOutput(true);
-                connection.connect();
-                DataOutputStream dos = new DataOutputStream(connection.getOutputStream());
-                dos.write(postString.getBytes());
-                dos.flush();
-                dos.close();
+                    Document document = Jsoup.connect(videoWebUrl).timeout(10000).get();
+                    String typeAndTvIdString = document.select(".video_list").get(0).parent().select("p script").get(0).data().trim();
+                    String[] variablesString = typeAndTvIdString.split(";");
+                    ArrayMap<String,String> variablesMap = new ArrayMap<>();
+                    for (String variableString : variablesString)
+                    {
+                        String[] keyValue = variableString.replace("var", "").trim().replace("\"", "").split("=");
+                        variablesMap.put(keyValue[0].trim(), keyValue[1].trim());
+                    }
+                    if (variablesMap.containsKey("type") && variablesMap.containsKey("tvid"))
+                    {
+                        String type = variablesMap.get("type");
+                        String tvid = variablesMap.get("tvid");
+                        //发起Http请求获取视频播放地址
+                        String postString = String.format("type=%s&data=%s&cip=221.237.118.61&refres=1&my_url=%s",
+                                type, URLEncoder.encode(tvid, "UTF-8"), URLEncoder.encode(videoWebUrl, "UTF-8"));
+                        String postUrl = "https://vod.lujiahb.com/1SuPlayer/vod/Api.php";
+                        URL url = new URL(postUrl);
+                        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+                        connection.setReadTimeout(10000);
+                        connection.setConnectTimeout(10000);
+                        connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+                        connection.setRequestProperty("Accept", "application/json, text/javascript, */*; q=0.01");
+                        connection.setRequestProperty("X-Requested-With", "XMLHttpRequest");
+                        connection.setRequestProperty("Referer", String.format("https://vod.lujiahb.com/1SuPlayer/vod/?type=%s&v=%s", type, tvid));
+                        connection.setRequestProperty("Accept-Language", "zh-CN");
+                        connection.setRequestProperty("Accept-Encoding", "gzip, deflate");
+                        connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko");
+                        connection.setRequestProperty("Host", "vod.lujiahb.com");
+                        connection.setRequestMethod("POST");
+                        connection.setDoOutput(true);
+                        connection.connect();
+                        DataOutputStream dos = new DataOutputStream(connection.getOutputStream());
+                        dos.write(postString.getBytes());
+                        dos.flush();
+                        dos.close();
 
-                if (connection.getResponseCode() != 200)
-                {
-                    return null;
+                        if (connection.getResponseCode() == 200)
+                        {
+                            String responseString = IOUtil.toString(connection.getInputStream());
+                            videoPlayAddress = new JSONObject(responseString).getString("url");
+                            if (!TextUtils.isEmpty(videoPlayAddress))
+                            {
+                                break;
+                            }
+                        }
+                    }
+
+                    retryTimes ++;
                 }
-                String responseString = IOUtil.toString(connection.getInputStream());
-                return new JSONObject(responseString).getString("url");
+                catch (Exception ex)
+                {
+                    retryTimes ++;
+                }
             }
-            catch (Exception ignored)
-            {
-                return null;
-            }
+
+            return videoPlayAddress;
         }
 
         @Override
